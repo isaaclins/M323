@@ -1,8 +1,0 @@
-{
-    "java.project.sourcePaths": [
-        "M323/praktische-umsetzung/src",
-        "M323/16-2/src/main/java",
-        "comparator-chain/src/main/java/ch/bbw/comparatorchain"
-    ],
-    "java.debug.settings.onBuildFailureProceed": true
-}
