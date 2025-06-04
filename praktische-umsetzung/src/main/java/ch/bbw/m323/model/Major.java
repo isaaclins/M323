@@ -1,4 +1,4 @@
-package ch.bbw.m323;
+package ch.bbw.m323.model;
 
 public enum Major {
     COMPUTER_SCIENCE,
