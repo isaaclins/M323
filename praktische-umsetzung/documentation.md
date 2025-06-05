@@ -47,7 +47,7 @@ classDiagram
         +static void main(String[])
     }
 
-    class "Main.AgeComparator" {
+    class Main_AgeComparator {
         +int compare(Student, Student)
     }
 
@@ -55,7 +55,7 @@ classDiagram
     Main ..> Student : uses
     Main ..> Course : uses
     Main ..> Lecturer : uses
-    Main ..> "Main.AgeComparator" : uses
+    Main ..> Main_AgeComparator : uses
 
     DataGenerator ..> Student : creates
     DataGenerator ..> Course : creates
