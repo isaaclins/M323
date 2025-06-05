@@ -1,10 +1,14 @@
 package ch.bbw.m323;
 
+import ch.bbw.m323.model.Course;
+import ch.bbw.m323.model.Lecturer;
+import ch.bbw.m323.model.Major;
+import ch.bbw.m323.model.Student;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
 public class DataGenerator {
 
@@ -39,31 +43,19 @@ public class DataGenerator {
         return students;
     }
 
-    public static List<Lecturer> generateLecturers(int count, List<Course> allCourses) {
+    public static List<Lecturer> generateLecturers(int count) {
         List<Lecturer> lecturers = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String lecturerId = "L" + (1000 + random.nextInt(9000));
             String name = (random.nextBoolean() ? "Dr. " : "Prof. ") + FIRST_NAMES[random.nextInt(FIRST_NAMES.length)]
                     + " " + LAST_NAMES[random.nextInt(LAST_NAMES.length)];
             String department = DEPARTMENTS[random.nextInt(DEPARTMENTS.length)];
-            Lecturer lecturer = new Lecturer(lecturerId, name, department);
-            lecturers.add(lecturer);
-        }
-        // Assign courses to lecturers
-        if (allCourses != null && !allCourses.isEmpty()) {
-            for (Course course : allCourses) {
-                if (course.getLecturer() == null) { // Assign only if not already assigned
-                    Lecturer randomLecturer = lecturers.get(random.nextInt(lecturers.size()));
-                    // course.setLecturer(randomLecturer); // This is now handled in
-                    // Lecturer.addCourse and Course.setLecturer
-                    randomLecturer.addCourse(course);
-                }
-            }
+            lecturers.add(new Lecturer(lecturerId, name, department));
         }
         return lecturers;
     }
 
-    public static List<Course> generateCourses(int count) {
+    public static List<Course> generateCourses(int count, List<Lecturer> lecturers) {
         List<Course> courses = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String coursePrefix = COURSE_PREFIXES[random.nextInt(COURSE_PREFIXES.length)];
@@ -71,9 +63,10 @@ public class DataGenerator {
             String courseName = COURSE_NAMES[random.nextInt(COURSE_NAMES.length)]
                     + COURSE_SUFFIXES[random.nextInt(COURSE_SUFFIXES.length)];
             int credits = 1 + random.nextInt(5); // 1 to 5 credits
-            // Lecturer is initially null, will be assigned in generateLecturers or can be
-            // assigned later
-            courses.add(new Course(courseId, courseName, credits));
+            Lecturer lecturer = (lecturers != null && !lecturers.isEmpty())
+                    ? lecturers.get(random.nextInt(lecturers.size()))
+                    : null;
+            courses.add(new Course(courseId, courseName, credits, lecturer));
         }
         return courses;
     }

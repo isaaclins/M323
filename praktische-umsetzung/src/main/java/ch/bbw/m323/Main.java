@@ -1,9 +1,15 @@
 package ch.bbw.m323;
 
+import ch.bbw.m323.model.Course;
+import ch.bbw.m323.model.Lecturer;
+import ch.bbw.m323.model.Student;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Main {
         public static void main(String[] args) {
@@ -39,7 +45,7 @@ public class Main {
                 Collections.sort(studentsSortedByGpaDesc, new Comparator<Student>() {
                         @Override
                         public int compare(Student s1, Student s2) {
-                                return Double.compare(s2.getGpa(), s1.getGpa()); // s2 vs s1 for descending
+                                return Double.compare(s2.gpa(), s1.gpa()); // s2 vs s1 for descending
                         }
                 });
                 studentsSortedByGpaDesc.forEach(System.out::println);
@@ -48,11 +54,11 @@ public class Main {
                 System.out.println("\n--- Sorted by Last Name, then First Name (Comparator: Lambda) ---");
                 List<Student> studentsSortedByName = new ArrayList<>(students);
                 studentsSortedByName.sort((s1, s2) -> {
-                        int lastNameCompare = s1.getLastName().compareTo(s2.getLastName());
+                        int lastNameCompare = s1.lastName().compareTo(s2.lastName());
                         if (lastNameCompare != 0) {
                                 return lastNameCompare;
                         }
-                        return s1.getFirstName().compareTo(s2.getFirstName());
+                        return s1.firstName().compareTo(s2.firstName());
                 });
                 studentsSortedByName.forEach(System.out::println);
 
@@ -61,17 +67,17 @@ public class Main {
                 System.out.println("\n--- Sorted by Major, then GPA (Descending) (Comparator: Chain) ---");
                 List<Student> studentsSortedByMajorThenGpa = new ArrayList<>(students);
                 studentsSortedByMajorThenGpa.sort(
-                                Comparator.comparing(Student::getMajor) // Sort by Major first
-                                                .thenComparing(Student::getGpa, Comparator.reverseOrder()) // Then by
-                                                                                                           // GPA
-                                                                                                           // descending
+                                Comparator.comparing(Student::major) // Sort by Major first
+                                                .thenComparing(Student::gpa, Comparator.reverseOrder()) // Then by
+                                                                                                        // GPA
+                                                                                                        // descending
                 );
                 studentsSortedByMajorThenGpa.forEach(System.out::println);
 
                 // Comparator: Using a comparator for enrollmentDate (Student.enrollmentDate)
                 System.out.println("\n--- Sorted by Enrollment Date (Comparator: Lambda) ---");
                 List<Student> studentsSortedByEnrollmentDate = new ArrayList<>(students);
-                studentsSortedByEnrollmentDate.sort(Comparator.comparing(Student::getEnrollmentDate));
+                studentsSortedByEnrollmentDate.sort(Comparator.comparing(Student::enrollmentDate));
                 studentsSortedByEnrollmentDate.forEach(System.out::println);
 
                 // --- Erweiterte Anforderung 1: Sorting with Association (Lecturer and Course)
@@ -79,12 +85,23 @@ public class Main {
                 // Datengenerierung: Kurse und Dozenten
                 System.out.println("\n\n--- Erweiterte Anforderung: Lecturer and Course Sorting ---");
 
-                List<Course> courses = DataGenerator.generateCourses(20); // Generiere 20 Kurse
-                List<Lecturer> lecturers = DataGenerator.generateLecturers(5, courses); // Generiere 5 Dozenten und
-                                                                                        // weise Kurse zu
+                List<Lecturer> lecturers = DataGenerator.generateLecturers(5);
+                List<Course> courses = DataGenerator.generateCourses(20, lecturers);
 
                 System.out.println("\n--- Generated Lecturers (Unsorted) ---");
-                lecturers.forEach(System.out::println);
+                final Map<Lecturer, Long> courseCountByLecturer = courses.stream()
+                                .filter(c -> c.lecturer() != null)
+                                .collect(Collectors.groupingBy(Course::lecturer, Collectors.counting()));
+
+                lecturers.forEach(l -> {
+                        long courseCount = courseCountByLecturer.getOrDefault(l, 0L);
+                        System.out.println("Lecturer{" +
+                                        "lecturerId='" + l.lecturerId() + '\'' +
+                                        ", name='" + l.name() + '\'' +
+                                        ", department='" + l.department() + '\'' +
+                                        ", coursesTaughtCount=" + courseCount +
+                                        '}');
+                });
 
                 System.out.println("\n--- Generated Courses (Unsorted, with assigned lecturers) ---");
                 courses.forEach(System.out::println);
@@ -93,27 +110,37 @@ public class Main {
                 System.out.println("\n--- Lecturers sorted by number of courses taught (descending) ---");
                 List<Lecturer> lecturersByCourseCount = new ArrayList<>(lecturers);
                 lecturersByCourseCount
-                                .sort(Comparator.comparingInt((Lecturer l) -> l.getCoursesTaught().size()).reversed());
-                lecturersByCourseCount.forEach(System.out::println);
+                                .sort(Comparator.comparingInt(
+                                                (Lecturer l) -> courseCountByLecturer.getOrDefault(l, 0L).intValue())
+                                                .reversed());
+                lecturersByCourseCount.forEach(l -> {
+                        long courseCount = courseCountByLecturer.getOrDefault(l, 0L);
+                        System.out.println("Lecturer{" +
+                                        "lecturerId='" + l.lecturerId() + '\'' +
+                                        ", name='" + l.name() + '\'' +
+                                        ", department='" + l.department() + '\'' +
+                                        ", coursesTaughtCount=" + courseCount +
+                                        '}');
+                });
 
                 // Sort Courses by Lecturer's name, then by Course name
                 System.out.println("\n--- Courses sorted by Lecturer Name, then Course Name ---");
                 List<Course> coursesByLecturerThenName = new ArrayList<>(courses);
                 coursesByLecturerThenName.sort(
                                 Comparator
-                                                .comparing((Course c) -> c.getLecturer() != null
-                                                                ? c.getLecturer().getName()
+                                                .comparing((Course c) -> c.lecturer() != null
+                                                                ? c.lecturer().name()
                                                                 : "", // Handhabung von null Lecturers
                                                                 Comparator.nullsLast(String::compareTo))
-                                                .thenComparing(Course::getCourseName));
+                                                .thenComparing(Course::courseName));
                 coursesByLecturerThenName.forEach(System.out::println);
 
                 // Sort Lecturers by their department, then by their name
                 System.out.println("\n--- Lecturers sorted by Department, then Name ---");
                 List<Lecturer> lecturersByDeptThenName = new ArrayList<>(lecturers);
                 lecturersByDeptThenName.sort(
-                                Comparator.comparing(Lecturer::getDepartment)
-                                                .thenComparing(Lecturer::getName));
+                                Comparator.comparing(Lecturer::department)
+                                                .thenComparing(Lecturer::name));
                 lecturersByDeptThenName.forEach(System.out::println);
 
                 // --- End Erweiterte Anforderung 1 ---
@@ -143,9 +170,9 @@ public class Main {
                 System.out.println(
                                 "   - Example: `Collections.sort(studentsSortedByIdReversed, Collections.reverseOrder());` sorted students by studentId in descending order.");
                 System.out.println(
-                                "   - If you have a specific comparator, e.g., `byGpa = Comparator.comparing(Student::getGpa)`, you can reverse it with `byGpa.reversed()`.");
+                                "   - If you have a specific comparator, e.g., `byGpa = Comparator.comparing(Student::gpa)`, you can reverse it with `byGpa.reversed()`.");
                 System.out.println(
-                                "     `students.sort(Comparator.comparing(Student::getGpa).reversed());` would sort by GPA descending.");
+                                "     `students.sort(Comparator.comparing(Student::gpa).reversed());` would sort by GPA descending.");
 
                 System.out.println("\n3. Dive into sorting in Java - How does Java sort? (Underlying Algorithms):");
                 System.out.println(
@@ -219,7 +246,7 @@ public class Main {
         static class AgeComparator implements Comparator<Student> {
                 @Override
                 public int compare(Student s1, Student s2) {
-                        return Integer.compare(s1.getAge(), s2.getAge());
+                        return Integer.compare(s1.age(), s2.age());
                 }
         }
 }
