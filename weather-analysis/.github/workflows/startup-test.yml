@@ -1,0 +1,32 @@
+name: Java Startup Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B package --file weather-analysis/pom.xml
+      - name: Copy data file
+        run: cp sample_weather_data.csv weather-analysis/
+      - name: Start application in background
+        run: |
+          cd weather-analysis
+          java -jar target/weather-analysis-1.0-SNAPSHOT.jar &
+      - name: Wait for application to start
+        run: sleep 10
+      - name: Check if application is running
+        run: pgrep -f "java"
